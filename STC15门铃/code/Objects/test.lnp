@@ -1,0 +1,11 @@
+".\Objects\delay.obj",
+".\Objects\IIC.obj",
+".\Objects\main.obj",
+".\Objects\Timer.obj",
+".\Objects\uart.obj",
+".\Objects\key.obj",
+".\Objects\DHT11.obj",
+".\Objects\LCD1602.obj" 
+TO ".\Objects\test" 
+
+PRINT(".\Listings\test.map") REMOVEUNUSED 

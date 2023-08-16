@@ -1,0 +1,371 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/17/2023 16:10:16 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\keil_mdk\C51\BIN\C51.EXE main.c LARGE OMF2 OPTIMIZE(8,SPEED) BROWSE DEBUG PRINT(.\Listings\
+                    -main.lst) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "BasicFun.h"
+   2          #include "uart.h"
+   3          #include "DHT11.h"
+   4          #include "LCD1602.h"
+   5          
+   6          #define KEY1 P20
+   7          #define KEY2 P21
+   8          #define KEY3 P22
+   9          #define KEY4 P23
+  10          #define KEY5 P32
+  11          #define KEY6 P33
+  12          #define KEY7 P35
+  13          
+  14          extern bit busy;
+  15          
+  16          char *str01 = "Welcome";
+  17          char *str02 = "Start Menu";
+  18          
+  19          u8 cur_work_mode = 0;
+  20          
+  21          u8 cur_hour = 9;
+  22          u8 cur_min  = 0;
+  23          u8 cur_sec  = 0;
+  24          
+  25          u8 adm_hour_up = 8;     //工作时间阈值  时 上限
+  26          u8 adm_min_up = 30;     //工作时间阈值  分 上限
+  27          u8 adm_hour_down = 23;  //工作时间阈值  时 下限
+  28          u8 adm_min_down = 30;   //工作时间阈值  分 下限
+  29          
+  30          void sysInit()
+  31          {
+  32   1              Timer0Init();
+  33   1              LCD_Init();
+  34   1              Uart01_Init();   //串口1初始化  
+  35   1              Uart02_Init();   //串口2初始化  
+  36   1      }
+  37          
+  38          void LCD_ShowDoorContext()
+  39          {
+  40   1              LCD_ShowString(1,1,str01);
+  41   1              LCD_ShowString(2,1,str02);
+  42   1      }
+  43          
+  44          void LCD_SetCurClockMode()
+  45          {
+  46   1              LCD_ShowString(1,1,"CurTime:");
+  47   1              LCD_ShowNum(1,9,cur_hour,2);
+  48   1              LCD_ShowString(1,11,"-");
+  49   1              LCD_ShowNum(1,12,cur_min,2);
+  50   1              LCD_ShowString(1,14,"-");
+  51   1              LCD_ShowNum(1,15,cur_sec,2);
+  52   1      
+  53   1              LCD_ShowString(2,1,"Set:");
+  54   1              LCD_ShowNum(2,4,adm_hour_up,2);
+C51 COMPILER V9.59.0.0   MAIN                                                              04/17/2023 16:10:16 PAGE 2   
+
+  55   1              LCD_ShowString(2,6,"-");
+  56   1              LCD_ShowNum(2,7,adm_min_up,2);
+  57   1              LCD_ShowString(2,9,"--");
+  58   1      
+  59   1              LCD_ShowNum(2,11,adm_hour_down,2);
+  60   1              LCD_ShowString(2,13,"-");
+  61   1              LCD_ShowNum(2,14,adm_min_down,2);
+  62   1      }
+  63          
+  64          
+  65          u8 key_scan()
+  66          {
+  67   1              u8 k = 0;
+  68   1              if(KEY1==0)
+  69   1              {
+  70   2                      delay_ms(15);
+  71   2                      if(KEY1==0)
+  72   2                      {
+  73   3                              k = 1;
+  74   3                      }
+  75   2                      while(!KEY1);
+  76   2              }
+  77   1      
+  78   1              if(KEY2==0)
+  79   1              {
+  80   2                      delay_ms(15);
+  81   2                      if(KEY2==0)
+  82   2                      {
+  83   3                              k = 2;
+  84   3                      }
+  85   2                      while(!KEY2);
+  86   2              }
+  87   1      
+  88   1              if(KEY3==0)
+  89   1              {
+  90   2                      delay_ms(15);
+  91   2                      if(KEY3==0)
+  92   2                      {
+  93   3                              k = 3;
+  94   3                      }
+  95   2                      while(!KEY3);
+  96   2              }
+  97   1      
+  98   1              if(KEY4==0)
+  99   1              {
+ 100   2                      delay_ms(15);
+ 101   2                      if(KEY4==0)
+ 102   2                      {
+ 103   3                              k = 4;
+ 104   3                      }
+ 105   2                      while(!KEY4);
+ 106   2              }
+ 107   1      
+ 108   1              if(KEY5==0)
+ 109   1              {
+ 110   2                      delay_ms(15);
+ 111   2                      if(KEY5==0)
+ 112   2                      {
+ 113   3                              k = 5;
+ 114   3                      }
+ 115   2                      while(!KEY5);
+ 116   2              }
+C51 COMPILER V9.59.0.0   MAIN                                                              04/17/2023 16:10:16 PAGE 3   
+
+ 117   1      
+ 118   1              if(KEY6==0)
+ 119   1              {
+ 120   2                      delay_ms(15);
+ 121   2                      if(KEY6==0)
+ 122   2                      {
+ 123   3                              k = 6;
+ 124   3                      }
+ 125   2                      while(!KEY6);
+ 126   2              }
+ 127   1      
+ 128   1              if(KEY7==0)
+ 129   1              {
+ 130   2                      delay_ms(15);
+ 131   2                      if(KEY7==0)
+ 132   2                      {
+ 133   3                              k = 7;
+ 134   3                      }
+ 135   2                      while(!KEY7);
+ 136   2              }
+ 137   1      
+ 138   1              return k;
+ 139   1      
+ 140   1      }
+ 141          
+ 142          void main()
+ 143          {
+ 144   1              u8 key_v = 0;
+ 145   1              u8 allow_flag = 1;
+ 146   1              
+ 147   1              sysInit();       //开发板外设复位
+ 148   1              
+ 149   1              LCD_ShowDoorContext();
+ 150   1      
+ 151   1              while (1)
+ 152   1              {
+ 153   2                      key_v = key_scan();
+ 154   2      
+ 155   2                      if(key_v == 5)
+ 156   2                      {
+ 157   3                              LCD_Init();
+ 158   3                              cur_work_mode = (cur_work_mode+1)%4;
+ 159   3                      }
+ 160   2                      
+ 161   2                      if( (adm_hour_up*60 + adm_min_up < cur_hour*60 + cur_min) && (adm_hour_down*60 + adm_min_down > cur_hour
+             -*60 + cur_min) )
+ 162   2                      {
+ 163   3                              allow_flag = 1;
+ 164   3                      }
+ 165   2                      else
+ 166   2                      {
+ 167   3                              allow_flag = 0;
+ 168   3                      }
+ 169   2      
+ 170   2                      //显示来客
+ 171   2                      if(allow_flag)
+ 172   2                      {
+ 173   3                              if(key_v == 1)
+ 174   3                              {
+ 175   4                                      cur_work_mode = 0;
+ 176   4                                      LCD_Init();
+ 177   4      //                              str01 = "Come in";
+C51 COMPILER V9.59.0.0   MAIN                                                              04/17/2023 16:10:16 PAGE 4   
+
+ 178   4      //                              str02 = "My dear";
+ 179   4                                      LCD_ShowString(1,1,"Come in");
+ 180   4                                      LCD_ShowString(2,1,"My dear");
+ 181   4                                      Uart01_SendString("A8:02/01*MP3");      
+ 182   4                                      Uart02_SendString("Come in,My dear!");
+ 183   4                              }
+ 184   3                              if(key_v == 2)
+ 185   3                              {
+ 186   4                                      cur_work_mode = 0;
+ 187   4                                      LCD_Init();
+ 188   4      //                              str01 = "Come in";
+ 189   4      //                              str02 = "My frined";
+ 190   4                                      LCD_ShowString(1,1,"Come in");
+ 191   4                                      LCD_ShowString(2,1,"My frined");
+ 192   4                                      Uart01_SendString("A8:02/02*MP3");
+ 193   4                                      Uart02_SendString("Come in,My frined!");
+ 194   4                              }
+ 195   3                              if(key_v == 3)
+ 196   3                              {
+ 197   4                                      cur_work_mode = 0;
+ 198   4                                      LCD_Init();
+ 199   4      //                              str01 = "Please wait";
+ 200   4      //                              str02 = "I will open soon";
+ 201   4                                      LCD_ShowString(1,1,"Please wait");
+ 202   4                                      LCD_ShowString(2,1,"I will open soon");
+ 203   4                                      Uart01_SendString("A8:02/03*MP3");
+ 204   4                                      Uart02_SendString("Please wait,I will open soon!");
+ 205   4                              }
+ 206   3                              if(key_v == 4)
+ 207   3                              {
+ 208   4                                      cur_work_mode = 0;
+ 209   4                                      LCD_Init();
+ 210   4      //                              str01 = "Please wait";
+ 211   4      //                              str02 = "I will open soon";
+ 212   4                                      LCD_ShowString(1,1,"Please wait");
+ 213   4                                      LCD_ShowString(2,1,"I will open soon");
+ 214   4                                      Uart01_SendString("A8:02/04*MP3");
+ 215   4                                      Uart02_SendString("Please wait,I will open soon!");
+ 216   4                              }
+ 217   3                      }
+ 218   2      
+ 219   2                      if( cur_work_mode==1 )          //设置当前闹钟
+ 220   2                      {
+ 221   3                              if(key_v == 6)
+ 222   3                              {
+ 223   4                                      cur_hour = (cur_hour+1)%24;
+ 224   4                              }
+ 225   3      
+ 226   3                              if(key_v == 7)
+ 227   3                              {
+ 228   4                                      cur_min = (cur_min+1)%60;
+ 229   4                              }
+ 230   3                      }
+ 231   2                      else if( cur_work_mode==2 )             //设置允许工作闹钟区间
+ 232   2                      {
+ 233   3                              if(key_v == 6)
+ 234   3                              {
+ 235   4                                      adm_hour_up = (adm_hour_up+1)%24;
+ 236   4                              }
+ 237   3      
+ 238   3                              if(key_v == 7)
+ 239   3                              {
+C51 COMPILER V9.59.0.0   MAIN                                                              04/17/2023 16:10:16 PAGE 5   
+
+ 240   4                                      adm_min_up = (adm_min_up+1)%60;
+ 241   4                              }
+ 242   3                      }
+ 243   2                      else if( cur_work_mode==3 )             //设置允许工作闹钟区间
+ 244   2                      {
+ 245   3                              if(key_v == 6)
+ 246   3                              {
+ 247   4                                      adm_hour_down = (adm_hour_down+1)%24;
+ 248   4                              }
+ 249   3      
+ 250   3                              if(key_v == 7)
+ 251   3                              {
+ 252   4                                      adm_min_down = (adm_min_down+1)%60;
+ 253   4                              }
+ 254   3                      }
+ 255   2      
+ 256   2      
+ 257   2      
+ 258   2                              
+ 259   2                      
+ 260   2                      if( cur_work_mode == 1 ||cur_work_mode == 2 ||cur_work_mode == 3)
+ 261   2                              LCD_SetCurClockMode();
+ 262   2                      
+ 263   2              }
+ 264   1      }
+ 265          
+ 266          
+ 267          void Timer0_Routine() interrupt 1
+ 268          {
+ 269   1          static unsigned int T0Count;
+ 270   1          T0Count++;
+ 271   1          if(T0Count>=1000)
+ 272   1          {
+ 273   2              T0Count=0;
+ 274   2                      cur_sec++;
+ 275   2          }
+ 276   1      
+ 277   1              if(cur_sec>=60)
+ 278   1              {
+ 279   2                      cur_sec = 0;
+ 280   2                      cur_min ++;
+ 281   2              }
+ 282   1      
+ 283   1              if(cur_min>=60)
+ 284   1              {
+ 285   2                      cur_min = 0;
+ 286   2                      cur_hour ++;
+ 287   2              }
+ 288   1      
+ 289   1              if(cur_hour>=24)
+ 290   1              {
+ 291   2                      cur_hour = 0;
+ 292   2              }
+ 293   1      
+ 294   1      }
+ 295          
+ 296          
+ 297          void Uart01_Routine() interrupt 4
+ 298          {
+ 299   1              u8 uart_data; //串口收到的数据
+ 300   1          if(RI == 1)
+ 301   1          {
+C51 COMPILER V9.59.0.0   MAIN                                                              04/17/2023 16:10:16 PAGE 6   
+
+ 302   2              RI = 0;
+ 303   2              uart_data = SBUF;
+ 304   2      
+ 305   2          }
+ 306   1      }
+ 307          
+ 308          void Uart02_Routine() interrupt 8 using 2
+ 309          {
+ 310   1          unsigned char mydata;
+ 311   1          if(S2CON & 0x01)          //如果是接收中断
+ 312   1          {
+ 313   2              S2CON &= 0xFE;       //接收中断标志位清0  
+ 314   2              mydata = S2BUF;      //将接收缓冲区的数据保存到mydata变量中
+ 315   2      
+ 316   2          }
+ 317   1      
+ 318   1              if(S2CON & 0x02)          //如果是发送中断
+ 319   1          {
+ 320   2              S2CON &= 0xFD;       //发送中断标志清0  
+ 321   2                      busy = 0;
+ 322   2          }
+ 323   1      
+ 324   1      }
+ 325          
+ 326          
+ 327          
+ 328          
+ 329          
+ 330          
+ 331          
+ 332          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1208    ----
+   CONSTANT SIZE    =    211    ----
+   XDATA SIZE       =     16       5
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
